@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>мой сад</title>
+<style>
+  :root{
+    --bg:#0f0f17;
+    --panel:#191926;
+    --panel-alt:#20202f;
+    --panel-line:#2c2c3d;
+    --pink:#ff4fa3;
+    --violet:#8b6bff;
+    --leaf:#6fcf7a;
+    --leaf-dim:#3f6b47;
+    --amber:#ffb454;
+    --red:#ff6b6b;
+    --cream:#f3ead2;
+    --text:#e9e7f2;
+    --text-dim:#9995ab;
+    --text-dimmer:#68647a;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    color:var(--text);
+    min-height:100vh;
+    padding:28px 20px 80px;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(139,107,255,0.10), transparent 45%),
+      radial-gradient(circle at 85% 10%, rgba(255,79,163,0.09), transparent 40%),
+      var(--bg);
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+
+  /* ===== Header / timer readout ===== */
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+    margin-bottom:22px;
+    border-bottom:1px solid var(--panel-line);
+    padding-bottom:20px;
+  }
+  .title-block h1{
+    font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:32px;
+    font-weight:700;
+    margin:0 0 4px;
+    letter-spacing:-0.5px;
+    background:linear-gradient(90deg,var(--cream),var(--pink) 70%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .title-block p{margin:0;color:var(--text-dim);font-size:14px;}
+  .timer{
+    font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    background:#000;
+    border:1px solid var(--panel-line);
+    border-radius:10px;
+    padding:10px 16px;
+    text-align:right;
+    box-shadow:0 0 24px rgba(139,107,255,0.15) inset;
+  }
+  .timer .clock{font-size:22px;color:var(--leaf);letter-spacing:1px;text-shadow:0 0 10px rgba(111,207,122,0.6);}
+  .timer .date{font-size:11px;color:var(--text-dimmer);margin-top:2px;}
+
+  /* ===== Nav ===== */
+  nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:26px;}
+  nav button{
+    font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    color:var(--text-dim);
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:13px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  nav button:hover{color:var(--text);border-color:var(--violet);}
+  nav button.active{
+    background:linear-gradient(90deg,var(--violet),var(--pink));
+    color:#fff;
+    border-color:transparent;
+  }
+
+  section.view{display:none;animation:fade .25s ease;}
+  section.view.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  h2.section-title{
+    font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color:var(--text-dimmer);
+    margin:28px 0 12px;
+  }
+  h2.section-title:first-child{margin-top:0;}
+
+  /* ===== Today card ===== */
+  .today-card{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:var(--radius);
+    padding:22px;
+    position:relative;
+    overflow:hidden;
+  }
+  .today-card::before{
+    content:"";
+    position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--violet),var(--pink),var(--amber));
+  }
+  .today-status{font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:19px;font-weight:600;margin-bottom:14px;}
+  .today-status.ok{color:var(--leaf);}
+  .today-status.due{color:var(--amber);}
+  .feed-row{display:grid;grid-template-columns:110px 1fr;gap:4px 14px;padding:9px 0;border-top:1px dashed var(--panel-line);font-size:14px;}
+  .feed-row:first-of-type{border-top:none;}
+  .feed-row .label{color:var(--text-dim);font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;padding-top:2px;}
+  .feed-row .val{color:var(--text);}
+  .badge{display:inline-block;font-size:10px;font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;}
+  .badge.done{background:rgba(111,207,122,0.15);color:var(--leaf);}
+  .badge.pending{background:rgba(255,180,84,0.15);color:var(--amber);}
+  .badge.missed{background:rgba(255,107,107,0.15);color:var(--red);}
+
+  /* ===== Plan cards (по датам) ===== */
+  .plan-card{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    margin-bottom:14px;
+  }
+  .plan-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .plan-date{font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px;font-weight:600;}
+  .plan-row{display:grid;grid-template-columns:190px 1fr;gap:4px 14px;padding:8px 0;border-top:1px dashed var(--panel-line);font-size:13.5px;}
+  .plan-row:first-of-type{border-top:none;}
+  .plan-row .label{color:var(--text-dim);font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;padding-top:2px;}
+  .plan-row .val{color:var(--text);}
+
+  /* ===== Shelf (plants) ===== */
+  .shelf{margin-bottom:26px;}
+  .shelf-label{
+    font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    font-size:11px;
+    color:var(--violet);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:8px;
+  }
+  .shelf-glow{
+    height:4px;border-radius:4px;
+    background:linear-gradient(90deg,var(--violet),var(--pink));
+    box-shadow:0 6px 18px -2px rgba(255,79,163,0.55);
+    margin-bottom:14px;
+  }
+  .sub-label{
+    font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    font-size:11px;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin:16px 0 8px;
+  }
+  .sub-label:first-of-type{margin-top:0;}
+  .plant-num{
+    font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    color:var(--violet);
+    font-size:11px;
+    margin-right:6px;
+  }
+  .plant-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;}
+  .plant-card{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:10px;
+    padding:13px 14px;
+    position:relative;
+    cursor:pointer;
+    transition:border-color .15s ease;
+  }
+  .plant-card:hover{border-color:var(--violet);}
+  .plant-name{font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:600;font-size:15px;margin:8px 0 3px;}
+  .plant-meta{font-size:12px;color:var(--text-dim);margin-bottom:2px;}
+  .plant-note{font-size:12.5px;color:var(--text-dim);line-height:1.4;}
+  .plant-care{font-size:12.5px;color:var(--text-dim);line-height:1.4;white-space:pre-line;}
+  .plant-expand-hint{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10px;color:var(--text-dimmer);margin-top:8px;}
+  .plant-card.expanded .plant-expand-hint{display:none;}
+  .status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;}
+  .status-dot.good{background:var(--leaf);box-shadow:0 0 6px var(--leaf);}
+  .status-dot.warn{background:var(--amber);box-shadow:0 0 6px var(--amber);}
+  .status-dot.grow{background:var(--violet);box-shadow:0 0 6px var(--violet);}
+
+  /* ===== Plant details (expand on click) ===== */
+  .plant-detail{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+  .plant-card.expanded .plant-detail{max-height:900px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--panel-line);}
+  .plant-detail-label{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dimmer);margin:12px 0 6px;}
+  .plant-detail-label:first-child{margin-top:0;}
+  .history-item{display:flex;gap:8px;font-size:12px;padding:3px 0;color:var(--text-dim);}
+  .history-date{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;color:var(--violet);min-width:66px;flex-shrink:0;}
+  .history-empty{font-size:12px;color:var(--text-dimmer);font-style:italic;}
+
+  /* ===== Fertilizer cards ===== */
+  .fert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:8px;}
+  .fert-card{background:var(--panel);border:1px solid var(--panel-line);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .15s ease;}
+  .fert-card:hover{border-color:var(--violet);}
+  .fert-name{font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:600;font-size:14.5px;margin-bottom:6px;}
+  .fert-dose{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:var(--leaf);white-space:pre-line;line-height:1.5;margin-bottom:8px;}
+  .fert-for{font-size:12px;color:var(--text-dim);}
+  .fert-hint{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10px;color:var(--text-dimmer);margin-top:8px;}
+  .fert-card.expanded .fert-hint{display:none;}
+  .fert-detail{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  .fert-card.expanded .fert-detail{max-height:300px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--panel-line);}
+  .fert-detail-label{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dimmer);margin-bottom:6px;}
+  .fert-comp{font-size:12px;color:var(--text-dim);line-height:1.4;}
+
+  /* ===== Expandable simple-list items (Грунт) ===== */
+  li.li-expandable{display:block !important;cursor:pointer;}
+  li.li-expandable:hover .l-name{color:var(--violet);}
+  .li-row{display:flex;justify-content:space-between;gap:10px;}
+  .li-hint{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10px;color:var(--text-dimmer);margin-top:4px;}
+  li.li-expandable.expanded .li-hint{display:none;}
+  .li-detail{max-height:0;overflow:hidden;transition:max-height .3s ease;font-size:12px;color:var(--text-dim);line-height:1.4;}
+  li.li-expandable.expanded .li-detail{max-height:200px;margin-top:6px;padding-top:6px;border-top:1px dashed var(--panel-line);}
+
+
+  /* ===== Journal ===== */
+  .journal-entry{display:flex;gap:16px;padding:14px 0;border-top:1px dashed var(--panel-line);}
+  .journal-entry:first-child{border-top:none;}
+  .journal-date{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:var(--pink);min-width:82px;padding-top:2px;}
+  .journal-body strong{font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;}
+  .journal-body .action{font-size:12.5px;margin:2px 0;}
+  .journal-body .action.done{color:var(--leaf);}
+  .journal-body .action.postponed{color:var(--amber);}
+  .journal-body .action.missed{color:var(--red);}
+  .journal-body .note{color:var(--text-dim);font-size:12.5px;}
+
+  /* ===== Grunt / recipes ===== */
+  .recipe{background:var(--panel);border:1px solid var(--panel-line);border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+  .recipe .rname{font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:600;margin-bottom:4px;}
+  .recipe .rmix{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:var(--text-dim);line-height:1.5;}
+
+  .simple-list{list-style:none;padding:0;margin:0;}
+  .simple-list li{padding:8px 0;border-top:1px dashed var(--panel-line);font-size:13.5px;display:flex;justify-content:space-between;gap:10px;}
+  .simple-list li:first-child{border-top:none;}
+  .simple-list .l-name{color:var(--text);}
+  .simple-list .l-meta{color:var(--text-dim);font-size:12px;text-align:right;}
+
+  /* ===== Stock checklist ===== */
+  .stock-list li{align-items:flex-start;}
+  .stock-list .l-name{flex:1;}
+  .stock-list .l-name .l-sub{display:block;color:var(--text-dim);font-size:11.5px;margin-top:2px;}
+  .stock-check{font-size:12px;font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;white-space:nowrap;padding-top:1px;}
+  .stock-check.yes{color:var(--leaf);}
+  .stock-check.no{color:var(--red);font-weight:600;}
+
+  footer{margin-top:40px;text-align:center;color:var(--text-dimmer);font-size:11px;font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="title-block">
+      <h1>мой сад</h1>
+      <p>Санкт-Петербург · обновлено <span id="last-updated"></span></p>
+    </div>
+    <div class="timer">
+      <div class="clock" id="clock">--:--</div>
+      <div class="date" id="dateline">-- ---- ----</div>
+    </div>
+  </header>
+
+  <nav id="nav"></nav>
+
+  <!-- ===================== СЕГОДНЯ ===================== -->
+  <section class="view" id="view-today">
+    <div class="today-card">
+      <div class="today-status" id="today-status">Загрузка…</div>
+      <div id="today-rows"></div>
+    </div>
+
+    <h2 class="section-title">Ближайшее по плану</h2>
+    <div id="upcoming-table"></div>
+  </section>
+
+  <!-- ===================== РАСТЕНИЯ ===================== -->
+  <section class="view" id="view-plants">
+    <div class="shelf">
+      <div class="shelf-label">🍅 Овощи — стеллаж под grow lights</div>
+      <div class="shelf-glow"></div>
+      <div class="sub-label">🍅 Томаты</div>
+      <div class="plant-grid" id="veg-tomato-grid"></div>
+      <div class="sub-label">🥬 Салат</div>
+      <div class="plant-grid" id="veg-salad-grid"></div>
+    </div>
+    <div class="shelf">
+      <div class="shelf-label">🍓 Ягоды — стеллаж под grow lights</div>
+      <div class="shelf-glow"></div>
+      <div class="plant-grid" id="berry-grid"></div>
+    </div>
+    <div class="shelf">
+      <div class="shelf-label">🌿 Комнатные — полки и стол</div>
+      <div class="shelf-glow"></div>
+      <div class="sub-label">🌴 Тропические</div>
+      <div class="plant-grid" id="house-tropical-grid"></div>
+      <div class="sub-label">🌵 Суккуленты</div>
+      <div class="plant-grid" id="house-succulent-grid"></div>
+      <div class="sub-label">🌿 Декоративно-лиственные</div>
+      <div class="plant-grid" id="house-decor-grid"></div>
+    </div>
+  </section>
+
+  <!-- ===================== УДОБРЕНИЯ ===================== -->
+  <section class="view" id="view-fert">
+    <h2 class="section-title">💧 Жидкие удобрения</h2>
+    <div class="fert-grid" id="fert-liquid"></div>
+    <h2 class="section-title">🌱 Субстраты-удобрения</h2>
+    <div class="fert-grid" id="fert-substrate"></div>
+    <h2 class="section-title">🔬 Микроудобрения</h2>
+    <div class="fert-grid" id="fert-micro"></div>
+    <h2 class="section-title">🛡️ Биопрепараты и защита</h2>
+    <div class="fert-grid" id="fert-bio"></div>
+  </section>
+
+  <!-- ===================== ПЛАН ПОДКОРМОК ===================== -->
+  <section class="view" id="view-plan">
+    <h2 class="section-title">🗓️ Полный план подкормок</h2>
+    <div id="plan-table"></div>
+  </section>
+
+  <!-- ===================== ЖУРНАЛ ===================== -->
+  <section class="view" id="view-journal">
+    <h2 class="section-title">📅 Журнал ухода</h2>
+    <div id="journal-list"></div>
+  </section>
+
+  <!-- ===================== СЕМЕНА ===================== -->
+  <section class="view" id="view-seeds">
+    <h2 class="section-title">🌰 Семена в наличии</h2>
+    <ul class="simple-list" id="seeds-list"></ul>
+    <h2 class="section-title">Заметки по посеву</h2>
+    <ul class="simple-list" id="seeds-notes"></ul>
+  </section>
+
+  <!-- ===================== ГРУНТ ===================== -->
+  <section class="view" id="view-soil">
+    <h2 class="section-title">🪨 Компоненты грунта</h2>
+    <ul class="simple-list" id="soil-list"></ul>
+    <h2 class="section-title">Рецепты смесей</h2>
+    <div id="soil-recipes"></div>
+  </section>
+
+  <!-- ===================== НАЛИЧИЕ ===================== -->
+  <section class="view" id="view-stock">
+    <h2 class="section-title">⚠️ Нужно докупить</h2>
+    <ul class="simple-list stock-list" id="stock-missing"></ul>
+    <h2 class="section-title">💧 Жидкие удобрения</h2>
+    <ul class="simple-list stock-list" id="stock-liquid"></ul>
+    <h2 class="section-title">🌱 Субстраты-удобрения</h2>
+    <ul class="simple-list stock-list" id="stock-substrate"></ul>
+    <h2 class="section-title">🔬 Микроудобрения</h2>
+    <ul class="simple-list stock-list" id="stock-micro"></ul>
+    <h2 class="section-title">🛡️ Биопрепараты и защита</h2>
+    <ul class="simple-list stock-list" id="stock-bio"></ul>
+    <h2 class="section-title">🪨 Грунт и разрыхлители</h2>
+    <ul class="simple-list stock-list" id="stock-soil"></ul>
+  </section>
+
+  <footer>мой_сад.xlsx · обновляется вручную по мере разговора с Claude</footer>
+</div>
+
+<script>
+/* =================== ДАННЫЕ (снимок из мой_сад.xlsx) =================== */
+
+const LAST_UPDATED = "11.07.2026";
+document.getElementById('last-updated').textContent = LAST_UPDATED;
+
+const TOMATO_CARE = "Полив: по подсыхании верхнего слоя, взрослым кустам — ежедневно (иногда дважды в день)\nОпыление: слегка встряхивать кисти по утрам (культура самоопыляемая)\nПодкормка: настой золы + Гуми-90 каждые 10-14 дней в цветении/плодоношении\nФормировка: убирать листья у земли и лишние загущающие";
+const SALAD_CARE = "Полив: по подсыхании грунта, в маленьких горшках может быть 2 раза в день\nНЕ подкармливать минеральными удобрениями — от них горчит (максимум биогумус)\nСрезать листья, оставляя точку роста — так салат отрастает заново";
+const STRAWBERRY_CARE = "Полив: регулярный, без пересыхания и без перелива\nСвет: яркий, под фитолампой 12-14 ч/день\nZION для клубники уже внесён при посадке — повторно не досыпать\nНовые листья/усы — хороший признак укоренения";
+
+const PLANTS_TOMATOES = [
+  {num:1, n:"Томат черри", loc:"Стеллаж, верхняя полка", pot:"Терракотовый", state:"good", note:"Плодоносит — красные плоды", history:[], care:TOMATO_CARE},
+  {num:2, n:"Томат черри", loc:"Стеллаж", pot:"Прозрачный большой", state:"good", note:"Плодоносит — красные плоды", history:[], care:TOMATO_CARE},
+  {num:3, n:"Томат черри", loc:"Стеллаж", pot:"Терракотовый круглый", state:"good", note:"Плодоносит — красные плоды", history:[], care:TOMATO_CARE},
+  {num:4, n:"Томат черри ⭐", loc:"Стеллаж", pot:"Прозрачный", state:"good", note:"Плодоносит — зелёные/жёлтые плоды", history:[], care:TOMATO_CARE},
+  {num:5, n:"Томат черри", loc:"Стеллаж", pot:"Прозрачный стакан", state:"good", note:"Плодоносит — зелёные/жёлтые плоды", history:[], care:TOMATO_CARE},
+  {num:6, n:"Томат черри", loc:"Стеллаж", pot:"Серый круглый", state:"good", note:"Плодоносит — зелёные/жёлтые плоды", history:[], care:TOMATO_CARE},
+  {num:7, n:"Томат черри", loc:"Стеллаж", pot:"Зелёный горшок", state:"warn", note:"Восстанавливается после урожая, пока без завязей", history:[], care:TOMATO_CARE},
+  {num:8, n:"Томат черри", loc:"Стеллаж", pot:"Чёрный круглый", state:"warn", note:"Восстанавливается после урожая, пока без завязей", history:[], care:TOMATO_CARE},
+  {num:9, n:"Томат черри", loc:"Стеллаж", pot:"Зелёный конус", state:"warn", note:"Восстанавливается после урожая, пока без завязей", history:[], care:TOMATO_CARE},
+  {num:10, n:"Томат черри", loc:"Стеллаж", pot:"Прозрачный круглый", state:"warn", note:"Без плодов, ещё не завязал", history:[], care:TOMATO_CARE},
+];
+
+const PLANTS_SALAD = [
+  {num:1, n:"Салат", loc:"Подоконник В/ЮВ", pot:"2л (горшок 1)", state:"grow", note:"2-3 куста в горшке, крупный", history:[], care:SALAD_CARE},
+  {num:2, n:"Салат", loc:"Подоконник В/ЮВ", pot:"2л (горшок 2)", state:"grow", note:"2-3 куста в горшке, крупный", history:[], care:SALAD_CARE},
+  {num:3, n:"Салат", loc:"Подоконник В/ЮВ", pot:"0.7л", state:"grow", note:"Крупный салат", history:[], care:SALAD_CARE},
+  {num:4, n:"Салат", loc:"Подоконник В/ЮВ", pot:"~300мл", state:"warn", note:"Тесно, вероятно нужна рассадка", history:[], care:SALAD_CARE},
+];
+
+const PLANTS_BERRIES = [
+  {n:"Клубника (3 кустика)", loc:"Стеллаж", pot:"Контейнеры", state:"good", note:"Начали прорастать новые стебли", history:[], care:STRAWBERRY_CARE},
+  {n:"Клубника (2 кустика)", loc:"Стеллаж", pot:"Контейнеры", state:"warn", note:"После посадки саженцев изменений нет", history:[], care:STRAWBERRY_CARE},
+];
+
+const PLANTS_TROPICAL = [
+  {num:1, n:"Филодендрон (зелёный)", loc:"Стол", pot:"Белый круглый", state:"good", note:"Тёмно-зелёные листья, точный сорт не уточнён", history:[],
+    care:"Яркий рассеянный свет, беречь от прямых лучей\nПолив по подсыхании верхнего слоя грунта\nПодкормка Florizel Тропические 1 раз в 2 недели (март-октябрь)\nЛюбит влажность воздуха"},
+  {num:2, n:"Филодендрон Pink Princess ⭐", loc:"Стол", pot:"Маленький белый", state:"warn", note:"Ценный! Нужен яркий свет", history:[],
+    care:"Нужен ЯРКИЙ свет — иначе новые листья теряют розовую пестролистность\nПолив по подсыхании верхнего слоя\nПодкормка Florizel Тропические 1 раз в 2 недели\nНе переставлять часто — не любит стресс"},
+  {num:3, n:"Фикус (толстый ствол, крупные листья)", loc:"Стол", pot:"Чёрный", state:"good", note:"Похож на бонсай-гинсенг", history:[],
+    care:"Стабильное место — не переставлять и не поворачивать без нужды (иначе сбросит листья)\nПолив по подсыхании верхнего слоя\nПодкормка Florizel Тропические 1 раз в 2 недели в сезон"},
+  {num:4, n:"Фикус Бенджамина", loc:"Стол", pot:"Прозрачные стаканы", state:"good", note:"2 экз., после реанимации в тепличке", history:[],
+    care:"Стабильные условия, без сквозняков и резких перепадов температуры\nПолив по подсыхании верхнего слоя\nПодкормка Florizel Тропические 1 раз в 2 недели в сезон"},
+  {num:5, n:"Монстера variegata ⭐", loc:"Стеллаж", pot:"Маленький", state:"good", note:"Укоренилась, 3 листа (1 полностью белый, 1 наполовину белый/зелёный)", history:[
+    {date:null, note:"Черенок с одним листом отделён от крупного материнского растения, посажен в грунт (не в воду)"},
+    {date:"09.06.2026", note:"Укореняется"},
+    {date:"20.06.2026", note:"Появился первый новый лист"},
+    {date:"01.07.2026", note:"Появился третий лист"},
+    {date:"11.07.2026", note:"Укоренилась — переводим на подкормку"},
+  ], care:"Укоренилась — теперь можно начинать подкормку Florizel Тропические 1 раз в 2 недели (первые разы в слабой концентрации)\nЯркий рассеянный свет для сохранения пестролистности\nПолив по подсыхании верхнего слоя грунта"},
+];
+
+const PLANTS_SUCCULENTS = [
+  {num:1, n:"Сансевиерия", loc:"Стол", pot:"Бордовый", state:"good", note:"Жёлтая кайма", history:[],
+    care:"Редкий полив — грунту давать полностью просыхать между поливами, зимой ещё реже\nНе переносит перелив\nХорошо растёт даже при неярком свете\nПодкормка минимальная и редкая"},
+];
+
+const PLANTS_DECOR = [
+  {num:1, n:"Хлорофитум variegated", loc:"Подоконник В/ЮВ", pot:"Белый + серый", state:"good", note:"2 экземпляра, пышные", history:[],
+    care:"Неприхотлив, полив по подсыхании грунта\nХорошо переносит недостаток света\nПодкормка FertiЛАБ 1 раз в 2 недели"},
+  {num:2, n:"Папоротник", loc:"Подоконник В/ЮВ", pot:"Прямоугольный зелёный", state:"good", note:"Любит опрыскивание", history:[],
+    care:"Любит влажность — регулярно опрыскивать, не допускать пересыхания грунта\nНе любит прямое солнце и сквозняки\nПодкормка FertiЛАБ 1 раз в 2 недели"},
+  {num:3, n:"Плющ variegated", loc:"Полка/стол", pot:"Большой тёмный", state:"good", note:"Пышный, длинные плети", history:[],
+    care:"Яркий рассеянный свет для сохранения пестролистности\nПолив по подсыхании верхнего слоя\nПодкормка FertiЛАБ 1 раз в 2 недели"},
+  {num:4, n:"Традесканция", loc:"Стол", pot:"Небольшой", state:"good", note:"Розово-фиолетовый край", history:[],
+    care:"Яркий свет важен для яркости окраски листьев\nПолив регулярный, не пересушивать\nЛегко черенкуется при желании размножить\nПодкормка FertiЛАБ 1 раз в 2 недели"},
+  {num:5, n:"Гипоэстес (розовая пупырка)", loc:"Стол", pot:"Серый", state:"warn", note:"Коричневые края — убрать", history:[],
+    care:"Яркий рассеянный свет для сохранения окраски пятен на листьях\nРегулярный полив, не любит пересыхания\nПодрезать, убирая подсохшие края\nПодкормка FertiЛАБ 1 раз в 2 недели"},
+  {num:6, n:"Драцена", loc:"Стол", pot:"Зелёный", state:"good", note:"Молодое растение", history:[],
+    care:"Устойчива к недостатку света и нерегулярному поливу\nНе переносит перелив и хлорированную воду — лучше отстоянная\nПодкормка FertiЛАБ 1 раз в 2 недели"},
+];
+
+const FERT_LIQUID = [
+  {n:"FertiЛАБ Mineralium", dose:"2-3 нажатия на горшок\n1 раз в 2 недели", forr:"Все комнатные декоративные",
+    comp:"Комплексное минеральное удобрение NPK + микроэлементы (Fe, Mn, Zn, B и др.) для декоративно-лиственных. Точные проценты — на этикетке."},
+  {n:"Florizel Тропические", dose:"10мл на 1л воды\nмарт–октябрь, 1р/2нед", forr:"Тропические (фикусы, монстера)",
+    comp:"Питательный раствор NPK + микроэлементы, состав адаптирован под тропические культуры (ароидные, фикусы)."},
+  {n:"Гуми-90", dose:"12 капель конц. на 3л\n⚠ не полноценное NPK, только стимулятор", forr:"Томаты, овощи — вместе с NPK",
+    comp:"Гуминовые кислоты (гумат) — биостимулятор роста и адаптоген. Полноценного NPK не содержит, только улучшает усвоение питания — нужен в паре с основным удобрением."},
+];
+const FERT_SUBSTRATE = [
+  {n:"Цимус для овощей", dose:"50-60мл на 1л грунта\nтолько при посадке!", forr:"Овощи",
+    comp:"Органо-минеральный комплекс для обогащения грунта при посадке овощных культур."},
+  {n:"ZION для овощей", dose:"уже внесён, не добавлять повторно", forr:"Томаты",
+    comp:"Гранулированное комплексное NPK-удобрение пролонгированного действия с микроэлементами — питает грунт около 2-3 лет."},
+  {n:"ZION для клубники", dose:"1 пакет на 1 куст, при посадке", forr:"Клубника",
+    comp:"Гранулированное NPK-удобрение пролонгированного действия, состав адаптирован под клубнику (акцент на калий для плодоношения)."},
+  {n:"Древесная зола", dose:"сухая: 1ч.л./3-5л грунта\nнастой: 1ст.л./1л воды, сутки", forr:"Томаты, овощи — плодоношение",
+    comp:"Природный источник калия, кальция, магния и микроэлементов. Азота не содержит."},
+];
+const FERT_MICRO = [
+  {n:"Сульфат магния Agros", dose:"6г на 3л\nтолько при хлорозе", forr:"Все растения",
+    comp:"Сульфат магния (MgSO₄) — источник магния. Устраняет хлороз (пожелтение листа между жилками)."},
+  {n:"Янтарная кислота", dose:"1г на 1л воды, по необходимости", forr:"Все растения",
+    comp:"Биостимулятор-адаптоген. Улучшает усвоение питания и устойчивость растения к стрессу (пересадка, перепады температур)."},
+  {n:"Лимонная кислота", dose:"щепотка на 1л — подкисление воды", forr:"Полив всех",
+    comp:"Пищевая кислота — подкисляет воду для полива растений, предпочитающих слабокислую среду."},
+  {n:"Корневин", dose:"обмакнуть черенок при пересадке", forr:"Черенки, пересадка",
+    comp:"Индолилмасляная кислота (стимулятор корнеобразования) — ускоряет укоренение черенков."},
+  {n:"Аминосил", dose:"1 ампула на 1л воды\nсовместим с FertiЛАБ", forr:"Декоративно-лиственные",
+    comp:"Комплекс аминокислот. Облегчает усвоение основных удобрений, снижает стресс при пересадке."},
+];
+const FERT_BIO = [
+  {n:"Биокомплекс-БТУ", dose:"15мл/3л — грунт\n1.5мл/1л — опрыскивание", forr:"Обеззараживание грунта",
+    comp:"Биопрепарат на основе полезных почвенных бактерий — оздоравливает грунт, подавляет патогенную микрофлору."},
+  {n:"Биозащита от болезней", dose:"0.25л на 15л раствора", forr:"Фитофтороз, роса, парша",
+    comp:"Биофунгицид на основе полезных бактерий — профилактика и лечение грибковых заболеваний."},
+  {n:"Актара", dose:"8г на 10л воды\nтолько при вредителях!", forr:"Тля, белокрылка, трипсы",
+    comp:"Инсектицид системного действия (тиаметоксам) — уничтожает сосущих и грызущих вредителей."},
+  {n:"Топуджин М паста", dose:"кистью, без разбавления", forr:"Срезы и раны после обрезки",
+    comp:"Садовая паста-герметик с фунгицидным действием — обеззараживает и защищает срезы после обрезки."},
+];
+
+const PLAN = [
+  {date:"18.06.2026", status:"done", items:[
+    {label:"Томаты", val:"Сульфат магния (6г/3л) + Гуми-90 (12 капель/3л)"},
+    {label:"Комнатные декор.", val:"FertiЛАБ (2-3 нажатия/горшок) + Аминосил (1 ампула/1л)"},
+    {label:"Тропические", val:"FertiЛАБ (2-3 нажатия/горшок) — заменить на Florizel далее"},
+    {label:"Доп.", val:"ZION верхний слой (по инструкции/горшок)"},
+  ]},
+  {date:"28.06.2026", status:"done", items:[
+    {label:"Томаты", val:"Гуми-90 (12 капель/3л)"},
+  ]},
+  {date:"02.07.2026", status:"missed", items:[]},
+  {date:"09.07.2026", status:"missed", items:[
+    {label:"Доп.", val:"Проверить вредителей"},
+  ]},
+  {date:"11.07.2026", status:"pending", items:[
+    {label:"Томаты №1-6 (плодоносят)", val:"Настой золы (1ст.л/1л, сутки) + Гуми-90 (12 капель/3л)"},
+    {label:"Томаты №7-9 (восстан.)", val:"Пауза — только вода (до бутонов)"},
+    {label:"Томат №10 (без завязей)", val:"Настой золы (1ст.л/1л, сутки) + Гуми-90 (12 капель/3л) — стимулировать цветение"},
+    {label:"Салат", val:"Не кормить"},
+    {label:"Клубника", val:"Не кормить (ZION уже внесён при посадке)"},
+    {label:"Комнатные декор.", val:"FertiЛАБ (2-3 нажатия/горшок)"},
+    {label:"Суккуленты", val:"Не кормить"},
+    {label:"Тропические", val:"Florizel Тропические (10мл/1л; Монстере — половинная концентрация, первая подкормка после укоренения)"},
+    {label:"Доп.", val:"Осмотр на вредителей"},
+  ]},
+  {date:"24.07.2026", status:"pending", items:[
+    {label:"Томаты №1-6 (плодоносят)", val:"Настой золы (1ст.л/1л, сутки) + Гуми-90 (12 капель/3л)"},
+    {label:"Томаты №7-9 (восстан.)", val:"Настой золы (1ст.л/1л) + Гуми-90 (12 капель/3л), если есть бутоны (иначе пауза)"},
+    {label:"Томат №10 (без завязей)", val:"Настой золы (1ст.л/1л, сутки) + Гуми-90 (12 капель/3л)"},
+    {label:"Салат", val:"Не кормить"},
+    {label:"Клубника", val:"Не кормить"},
+    {label:"Комнатные декор.", val:"FertiЛАБ (2-3 нажатия/горшок)"},
+    {label:"Суккуленты", val:"Не кормить"},
+    {label:"Тропические", val:"Florizel Тропические (10мл/1л)"},
+    {label:"Доп.", val:"Биозащита (профилактика)"},
+  ]},
+  {date:"07.08.2026", status:"pending", items:[
+    {label:"Томаты №1-6 (плодоносят)", val:"Настой золы (1ст.л/1л, сутки) + Гуми-90 (12 капель/3л)"},
+    {label:"Томаты №7-9 (восстан.)", val:"Настой золы (1ст.л/1л) + Гуми-90 (12 капель/3л), если есть бутоны (иначе пауза)"},
+    {label:"Томат №10 (без завязей)", val:"Настой золы (1ст.л/1л, сутки) + Гуми-90 (12 капель/3л)"},
+    {label:"Салат", val:"Не кормить"},
+    {label:"Клубника", val:"Не кормить"},
+    {label:"Комнатные декор.", val:"FertiЛАБ (2-3 нажатия/горшок)"},
+    {label:"Суккуленты", val:"Не кормить"},
+    {label:"Тропические", val:"Florizel Тропические (10мл/1л)"},
+    {label:"Доп.", val:"Проверить, не пора ли повторить осмотр на вредителей"},
+  ]},
+];
+
+const JOURNAL = [
+  {d:"11.07.2026", who:"Клубника", action:"Списание/наблюдение", note:"Выброшен 1 куст (было 6, стало 5) — у 3 начали расти новые стебли, у 2 без изменений с посадки", status:"done"},
+  {d:"11.07.2026", who:"Томаты", action:"Пересчёт/наблюдение", note:"Уточнено: 10 кустов (все на стеллаже, не 11) — 3 плодоносят красным, 3 зелёные/жёлтые плоды, 3 восстанавливаются после урожая, 1 ещё без завязей", status:"done"},
+  {d:"02.07.2026", who:"—", action:"Пропущено", note:"Томаты Гуми + Комнатные FertiЛАБ — по факту не сделано", status:"missed"},
+  {d:"28.06.2026", who:"Томаты", action:"Подкормка · FertiЛАБ", note:"Перенос с 25.06", status:"postponed"},
+  {d:"18.06.2026", who:"Все комнатные", action:"Подкормка · FertiЛАБ + Аминосил ампула на 3л", note:"Кроме монстеры и салата", status:"done"},
+  {d:"18.06.2026", who:"Томаты слабые", action:"Выброшены · ~4 куста без завязей", note:"Грунт обеззаражен БТУ 15мл/3л", status:"done"},
+  {d:"18.06.2026", who:"Томаты (~10 кустов)", action:"Полив · Сульфат магния 6г + Гуми 12 кап. на 3л", note:"Обновлён верхний слой + ZION", status:"done"},
+];
+
+const SEEDS = [
+  {n:"Горох овощной «Детский сахарный»", brand:"Аэлита", note:"Мозговой, без пергамента, сладкий"},
+  {n:"Горох овощной «Медовик»", brand:"Аэлита", note:"Низкорослый, мозговой, нежный"},
+  {n:"Салат листовой «Богема»", brand:"Аэлита", note:"Кудрявый, листовой"},
+];
+const SEEDS_NOTES = [
+  {n:"Горох", note:"Горшок от 3л, опора для плетей, умеренный полив, расстояние 5–7см"},
+  {n:"Салат", note:"Быстрый урожай 3-4 нед., не кормить минералкой, срезать листья оставляя точку роста"},
+  {n:"Следующий посев", note:"Горох — место на стеллаже освободилось после выброшенных томатов"},
+];
+
+const SOIL = [
+  {n:"Вермикулит фр.3-5", meta:"10-20% к грунту",
+    desc:"Минеральный разрыхлитель слоистой структуры. Удерживает влагу и воздух в грунте, улучшает аэрацию корней."},
+  {n:"Перлит", meta:"10-30% к грунту",
+    desc:"Вспученное вулканическое стекло, пористый разрыхлитель. Предотвращает слёживание грунта, улучшает дренаж."},
+  {n:"Керамзит мелкий фр.5-10", meta:"дренаж 2-3см на дно",
+    desc:"Обожжённая глина. Используется как дренажный слой на дне горшка — отводит лишнюю воду от корней при поливе."},
+  {n:"Диатомит фр.2-5", meta:"10-15% к грунту",
+    desc:"Осадочная порода из панцирей диатомовых водорослей. Мульчирующий слой сверху грунта — снижает риск грибных комариков и пересыхания."},
+  {n:"Цеолит (2 вида)", meta:"10-20% к грунту",
+    desc:"Природный минерал-адсорбент. Удерживает и постепенно отдаёт влагу и питательные вещества, снижает риск закисания грунта."},
+  {n:"Мох сфагнум", meta:"черенкование, мульча",
+    desc:"Природный мох с антисептическими свойствами. Используется для укоренения черенков и как мульча — хорошо удерживает влагу."},
+  {n:"Биогумус БиоГранула", meta:"10-20% при посадке",
+    desc:"Продукт переработки органики дождевыми червями. Натуральное органическое удобрение, обогащает грунт микрофлорой и питанием."},
+  {n:"Seramis для орхидей", meta:"орхидеи, тропические",
+    desc:"Обожжённая глина в гранулах. Субстрат для орхидей и добавка для тропических растений — держит воздухопроницаемость корней."},
+  {n:"Грунт декор.-лиственных", meta:"основа для комнатных",
+    desc:"Готовая грунтовая смесь для декоративно-лиственных комнатных растений — основа при посадке монстеры, фикуса, плюща и т.д."},
+];
+const SOIL_RECIPES = [
+  {n:"Томаты черри", mix:"60% универсальный грунт + 20% перлит + 10% вермикулит + 10% биогумус + щепотка ZION"},
+  {n:"Тропические", mix:"50% грунт декор-лиственных + 20% перлит + 15% вермикулит + 10% биогумус + 5% цеолит"},
+  {n:"Суккуленты", mix:"40% грунт + 40% перлит + 20% диатомит или крупный песок"},
+];
+
+/* ---- Постоянное наличие ---- */
+const STOCK_LIQUID = [
+  {n:"FertiЛАБ Mineralium", have:true, meta:"Все комнатные декоративные"},
+  {n:"Florizel Тропические", have:true, meta:"Тропические (фикусы, монстера)"},
+  {n:"Гуми-90", have:true, meta:"Томаты, овощи"},
+  {n:"Универсальное NPK (жидкое)", have:false, meta:"Овощи — наращивание листвы после обрезки урожая (томаты №7-9)"},
+];
+const STOCK_SUBSTRATE = [
+  {n:"Цимус для овощей", have:true, meta:"Овощи, только при посадке"},
+  {n:"ZION для овощей", have:true, meta:"Уже внесён, работает 3 года"},
+  {n:"ZION для клубники", have:true, meta:"Клубника, при посадке"},
+  {n:"Древесная зола", have:true, meta:"Томаты, овощи — плодоношение"},
+];
+const STOCK_MICRO = [
+  {n:"Сульфат магния Agros", have:true, meta:"При хлорозе"},
+  {n:"Янтарная кислота", have:true, meta:"Все растения"},
+  {n:"Лимонная кислота", have:true, meta:"Подкисление воды"},
+  {n:"Корневин", have:true, meta:"Черенки, пересадка"},
+  {n:"Аминосил", have:true, meta:"Декоративно-лиственные"},
+  {n:"Монофосфат калия / калиевая селитра", have:false, meta:"Стимуляция цветения (томат №10, если долго без бутонов)"},
+];
+const STOCK_BIO = [
+  {n:"Биокомплекс-БТУ", have:true, meta:"Обеззараживание грунта"},
+  {n:"Биозащита от болезней", have:true, meta:"Фитофтороз, роса, парша"},
+  {n:"Актара", have:true, meta:"Тля, белокрылка, трипсы"},
+  {n:"Топуджин М паста", have:true, meta:"Срезы и раны после обрезки"},
+];
+const STOCK_SOIL = [
+  {n:"Вермикулит фр.3-5", have:true, meta:""},
+  {n:"Перлит", have:true, meta:""},
+  {n:"Керамзит мелкий фр.5-10", have:true, meta:""},
+  {n:"Диатомит фр.2-5", have:true, meta:""},
+  {n:"Цеолит (2 вида)", have:true, meta:""},
+  {n:"Мох сфагнум", have:true, meta:""},
+  {n:"Биогумус БиоГранула", have:true, meta:""},
+  {n:"Seramis для орхидей", have:true, meta:""},
+  {n:"Грунт декор.-лиственных", have:true, meta:""},
+];
+
+/* =================== РЕНДЕР =================== */
+
+function parseDate(s){ // "18.06.2026" -> Date
+  const [d,m,y] = s.split(".").map(Number);
+  return new Date(y, m-1, d);
+}
+function fmtDate(dt){
+  return dt.toLocaleDateString('ru-RU', {day:'2-digit', month:'long', year:'numeric'});
+}
+
+function renderClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('dateline').textContent = fmtDate(now).toUpperCase();
+}
+renderClock();
+setInterval(renderClock, 30000);
+
+const TABS = [
+  {id:"today", label:"Сегодня"},
+  {id:"plants", label:"Растения"},
+  {id:"fert", label:"Удобрения"},
+  {id:"plan", label:"План подкормок"},
+  {id:"journal", label:"Журнал"},
+  {id:"seeds", label:"Семена"},
+  {id:"soil", label:"Грунт"},
+  {id:"stock", label:"Наличие"},
+];
+const nav = document.getElementById('nav');
+TABS.forEach((t,i)=>{
+  const b = document.createElement('button');
+  b.textContent = t.label;
+  b.dataset.id = t.id;
+  if(i===0) b.classList.add('active');
+  b.onclick = ()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('section.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+t.id).classList.add('active');
+  };
+  nav.appendChild(b);
+});
+document.getElementById('view-today').classList.add('active');
+
+function statusBadge(s){
+  if(s==='done') return '<span class="badge done">сделано</span>';
+  if(s==='missed') return '<span class="badge missed">пропущено</span>';
+  return '<span class="badge pending">ожидает</span>';
+}
+
+/* ---- Сегодня ---- */
+function planCard(entry, today){
+  const isToday = parseDate(entry.date).getTime() === today.getTime();
+  const rows = entry.items.length
+    ? entry.items.map(it=>`<div class="plan-row"><div class="label">${it.label}</div><div class="val">${it.val}</div></div>`).join('')
+    : `<div class="plan-row"><div class="val">Подкормка не требуется / не выполнено</div></div>`;
+  return `<div class="plan-card">
+    <div class="plan-card-head"><div class="plan-date">${entry.date}</div>${statusBadge(entry.status)}</div>
+    ${rows}
+  </div>`;
+}
+
+(function renderToday(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  // ближайшая запись плана <= сегодня, ищем последнюю подходящую (текущий цикл)
+  let current = null;
+  for(const entry of PLAN){
+    const d = parseDate(entry.date);
+    if(d <= today) current = entry;
+  }
+  const statusEl = document.getElementById('today-status');
+  const rowsEl = document.getElementById('today-rows');
+  if(!current){
+    statusEl.textContent = "Нет данных по плану";
+    statusEl.className = "today-status due";
+  } else {
+    const isToday = parseDate(current.date).getTime() === today.getTime();
+    statusEl.textContent = isToday ? "🔔 Сегодня по плану:" : "Актуально с " + current.date + ":";
+    statusEl.className = "today-status " + (current.status==='done' ? 'ok' : 'due');
+    const html = current.items.map(it=>`<div class="feed-row"><div class="label">${it.label}</div><div class="val">${it.val}</div></div>`).join('');
+    rowsEl.innerHTML = html || "<div class='feed-row'><div class='val'>Подкормка не требуется</div></div>";
+  }
+
+  // ближайшие 3 записи начиная с current
+  const idx = PLAN.indexOf(current);
+  const upcoming = PLAN.slice(Math.max(0,idx), idx+3);
+  document.getElementById('upcoming-table').innerHTML = upcoming.map(e=>planCard(e, today)).join('');
+})();
+
+/* ---- Растения ---- */
+function renderHistory(history){
+  if(!history || !history.length){
+    return `<div class="history-empty">История пока не ведётся — появится по мере новых сообщений об уходе.</div>`;
+  }
+  return history.map(h=>`
+    <div class="history-item">
+      <span class="history-date">${h.date ? h.date : '—'}</span>
+      <span class="history-text">${h.note}</span>
+    </div>
+  `).join('');
+}
+function plantCard(p){
+  const numBadge = p.num ? `<span class="plant-num">№${p.num}</span>` : '';
+  return `<div class="plant-card" onclick="this.classList.toggle('expanded')">
+    <div class="plant-name">${numBadge}${p.n}</div>
+    <div class="plant-meta">${p.loc} · ${p.pot}</div>
+    <div class="plant-expand-hint">нажми для подробностей →</div>
+    <div class="plant-detail">
+      <div class="plant-detail-label">Текущее состояние</div>
+      <div class="plant-note"><span class="status-dot ${p.state}"></span>${p.note}</div>
+      <div class="plant-detail-label">История изменений</div>
+      ${renderHistory(p.history)}
+      <div class="plant-detail-label">Рекомендации по уходу</div>
+      <div class="plant-care">${p.care || 'Пока нет заметок по уходу для этого растения.'}</div>
+    </div>
+  </div>`;
+}
+document.getElementById('veg-tomato-grid').innerHTML = PLANTS_TOMATOES.map(p=>plantCard(p)).join("");
+document.getElementById('veg-salad-grid').innerHTML = PLANTS_SALAD.map(p=>plantCard(p)).join("");
+document.getElementById('berry-grid').innerHTML = PLANTS_BERRIES.map(p=>plantCard(p)).join("");
+document.getElementById('house-tropical-grid').innerHTML = PLANTS_TROPICAL.map(p=>plantCard(p)).join("");
+document.getElementById('house-succulent-grid').innerHTML = PLANTS_SUCCULENTS.map(p=>plantCard(p)).join("");
+document.getElementById('house-decor-grid').innerHTML = PLANTS_DECOR.map(p=>plantCard(p)).join("");
+
+/* ---- Удобрения ---- */
+function fertCard(f){
+  return `<div class="fert-card" onclick="this.classList.toggle('expanded')">
+    <div class="fert-name">${f.n}</div>
+    <div class="fert-dose">${f.dose}</div>
+    <div class="fert-for">${f.forr}</div>
+    <div class="fert-hint">нажми для состава →</div>
+    <div class="fert-detail">
+      <div class="fert-detail-label">Состав</div>
+      <div class="fert-comp">${f.comp || 'Состав не указан.'}</div>
+    </div>
+  </div>`;
+}
+document.getElementById('fert-liquid').innerHTML = FERT_LIQUID.map(fertCard).join("");
+document.getElementById('fert-substrate').innerHTML = FERT_SUBSTRATE.map(fertCard).join("");
+document.getElementById('fert-micro').innerHTML = FERT_MICRO.map(fertCard).join("");
+document.getElementById('fert-bio').innerHTML = FERT_BIO.map(fertCard).join("");
+
+/* ---- План подкормок (полный) ---- */
+(function(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  document.getElementById('plan-table').innerHTML = PLAN.map(e=>planCard(e, today)).join('');
+})();
+
+/* ---- Журнал ---- */
+document.getElementById('journal-list').innerHTML = JOURNAL.map(j=>`
+  <div class="journal-entry">
+    <div class="journal-date">${j.d}</div>
+    <div class="journal-body">
+      <strong>${j.who}</strong>
+      <div class="action ${j.status}">${j.action}</div>
+      <div class="note">${j.note}</div>
+    </div>
+  </div>
+`).join("");
+
+/* ---- Семена ---- */
+document.getElementById('seeds-list').innerHTML = SEEDS.map(s=>`
+  <li><span class="l-name">${s.n}</span><span class="l-meta">${s.brand} · ${s.note}</span></li>
+`).join("");
+document.getElementById('seeds-notes').innerHTML = SEEDS_NOTES.map(s=>`
+  <li><span class="l-name">${s.n}</span><span class="l-meta">${s.note}</span></li>
+`).join("");
+
+/* ---- Грунт ---- */
+document.getElementById('soil-list').innerHTML = SOIL.map(s=>`
+  <li class="li-expandable" onclick="this.classList.toggle('expanded')">
+    <div class="li-row"><span class="l-name">${s.n}</span><span class="l-meta">${s.meta}</span></div>
+    <div class="li-hint">нажми для описания →</div>
+    <div class="li-detail">${s.desc || 'Описание не указано.'}</div>
+  </li>
+`).join("");
+document.getElementById('soil-recipes').innerHTML = SOIL_RECIPES.map(r=>`
+  <div class="recipe"><div class="rname">${r.n}</div><div class="rmix">${r.mix}</div></div>
+`).join("");
+
+/* ---- Постоянное наличие ---- */
+function stockItem(s){
+  const sub = s.meta ? `<span class="l-sub">${s.meta}</span>` : '';
+  const check = s.have
+    ? '<span class="stock-check yes">✅ есть</span>'
+    : '<span class="stock-check no">❌ нужно купить</span>';
+  return `<li><span class="l-name">${s.n}${sub}</span>${check}</li>`;
+}
+const ALL_STOCK = [...STOCK_LIQUID, ...STOCK_SUBSTRATE, ...STOCK_MICRO, ...STOCK_BIO, ...STOCK_SOIL];
+const MISSING_STOCK = ALL_STOCK.filter(s=>!s.have);
+document.getElementById('stock-missing').innerHTML = MISSING_STOCK.length
+  ? MISSING_STOCK.map(stockItem).join("")
+  : `<li><span class="l-name">Всё необходимое есть в наличии</span></li>`;
+document.getElementById('stock-liquid').innerHTML = STOCK_LIQUID.map(stockItem).join("");
+document.getElementById('stock-substrate').innerHTML = STOCK_SUBSTRATE.map(stockItem).join("");
+document.getElementById('stock-micro').innerHTML = STOCK_MICRO.map(stockItem).join("");
+document.getElementById('stock-bio').innerHTML = STOCK_BIO.map(stockItem).join("");
+document.getElementById('stock-soil').innerHTML = STOCK_SOIL.map(stockItem).join("");
+</script>
+</body>
+</html>
