@@ -122,10 +122,10 @@
   .today-status{font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:19px;font-weight:600;margin-bottom:14px;}
   .today-status.ok{color:var(--leaf);}
   .today-status.due{color:var(--amber);}
-  .feed-row{display:grid;grid-template-columns:110px 1fr;gap:4px 14px;padding:9px 0;border-top:1px dashed var(--panel-line);font-size:14px;}
+  .feed-row{padding:10px 0;border-top:1px dashed var(--panel-line);}
   .feed-row:first-of-type{border-top:none;}
-  .feed-row .label{color:var(--text-dim);font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;padding-top:2px;}
-  .feed-row .val{color:var(--text);}
+  .feed-row .label{display:block;color:var(--violet);font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:600;font-size:14.5px;margin-bottom:3px;}
+  .feed-row .val{display:block;color:var(--text);font-size:15px;line-height:1.4;}
   .badge{display:inline-block;font-size:10px;font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;}
   .badge.done{background:rgba(111,207,122,0.15);color:var(--leaf);}
   .badge.pending{background:rgba(255,180,84,0.15);color:var(--amber);}
@@ -141,10 +141,10 @@
   }
   .plan-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
   .plan-date{font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px;font-weight:600;}
-  .plan-row{display:grid;grid-template-columns:190px 1fr;gap:4px 14px;padding:8px 0;border-top:1px dashed var(--panel-line);font-size:13.5px;}
+  .plan-row{padding:9px 0;border-top:1px dashed var(--panel-line);}
   .plan-row:first-of-type{border-top:none;}
-  .plan-row .label{color:var(--text-dim);font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;padding-top:2px;}
-  .plan-row .val{color:var(--text);}
+  .plan-row .label{display:block;color:var(--violet);font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:600;font-size:13.5px;margin-bottom:3px;}
+  .plan-row .val{display:block;color:var(--text);font-size:14px;line-height:1.4;}
 
   /* ===== Shelf (plants) ===== */
   .shelf{margin-bottom:26px;}
@@ -750,11 +750,16 @@ function statusBadge(s){
 }
 
 /* ---- Сегодня ---- */
-function planCard(entry, today){
+const NO_ACTION_RE = /не корм|пропустить|без удобрений|не требуется/i;
+function actionableItems(items){
+  return items.filter(it => !NO_ACTION_RE.test(it.val));
+}
+function planCard(entry, today, onlyActionable){
   const isToday = parseDate(entry.date).getTime() === today.getTime();
-  const rows = entry.items.length
-    ? entry.items.map(it=>`<div class="plan-row"><div class="label">${it.label}</div><div class="val">${it.val}</div></div>`).join('')
-    : `<div class="plan-row"><div class="val">Подкормка не требуется / не выполнено</div></div>`;
+  const items = onlyActionable ? actionableItems(entry.items) : entry.items;
+  const rows = items.length
+    ? items.map(it=>`<div class="plan-row"><div class="label">${it.label}</div><div class="val">${it.val}</div></div>`).join('')
+    : `<div class="plan-row"><div class="val">${onlyActionable ? 'Сегодня действий не требуется' : 'Подкормка не требуется / не выполнено'}</div></div>`;
   return `<div class="plan-card">
     <div class="plan-card-head"><div class="plan-date">${entry.date}</div>${statusBadge(entry.status)}</div>
     ${rows}
@@ -778,15 +783,16 @@ function planCard(entry, today){
     const isToday = parseDate(current.date).getTime() === today.getTime();
     statusEl.textContent = isToday ? "🔔 Сегодня по плану:" : "Актуально с " + current.date + ":";
     statusEl.className = "today-status " + (current.status==='done' ? 'ok' : 'due');
-    const html = current.items.map(it=>`<div class="feed-row"><div class="label">${it.label}</div><div class="val">${it.val}</div></div>`).join('');
-    rowsEl.innerHTML = html || "<div class='feed-row'><div class='val'>Подкормка не требуется</div></div>";
+    const todoItems = actionableItems(current.items);
+    const html = todoItems.map(it=>`<div class="feed-row"><div class="label">${it.label}</div><div class="val">${it.val}</div></div>`).join('');
+    rowsEl.innerHTML = html || "<div class='feed-row'><div class='val'>Сегодня действий не требуется</div></div>";
   }
 
   // окно из 3 записей вокруг текущей (новее выше, старее ниже)
   const idx = PLAN.indexOf(current);
   const startIdx = Math.max(0, idx - 1);
   const upcoming = PLAN.slice(startIdx, startIdx + 3);
-  document.getElementById('upcoming-table').innerHTML = upcoming.map(e=>planCard(e, today)).join('');
+  document.getElementById('upcoming-table').innerHTML = upcoming.map(e=>planCard(e, today, true)).join('');
 })();
 
 /* ---- Растения ---- */
