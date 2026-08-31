@@ -122,10 +122,17 @@
   .today-status{font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:19px;font-weight:600;margin-bottom:14px;}
   .today-status.ok{color:var(--leaf);}
   .today-status.due{color:var(--amber);}
+  .today-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  @media (max-width:680px){.today-grid{grid-template-columns:1fr;}}
+  .today-col-title{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dimmer);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--panel-line);}
+  .today-col-todo{background:rgba(255,180,84,0.06);border-radius:10px;padding:14px;margin:-14px;}
   .feed-row{padding:10px 0;border-top:1px dashed var(--panel-line);}
   .feed-row:first-of-type{border-top:none;}
   .feed-row .label{display:block;color:var(--violet);font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:600;font-size:14.5px;margin-bottom:3px;}
   .feed-row .val{display:block;color:var(--text);font-size:15px;line-height:1.4;}
+  .feed-row.no-action .label{color:var(--text-dimmer);}
+  .feed-row.no-action .val{color:var(--text-dimmer);font-size:13.5px;}
+  .feed-row.no-action{opacity:.75;}
   .badge{display:inline-block;font-size:10px;font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;}
   .badge.done{background:rgba(111,207,122,0.15);color:var(--leaf);}
   .badge.pending{background:rgba(255,180,84,0.15);color:var(--amber);}
@@ -285,7 +292,16 @@
   <section class="view" id="view-today">
     <div class="today-card">
       <div class="today-status" id="today-status">Загрузка…</div>
-      <div id="today-rows"></div>
+      <div class="today-grid">
+        <div class="today-col">
+          <div class="today-col-title">Все растения</div>
+          <div id="today-rows-all"></div>
+        </div>
+        <div class="today-col today-col-todo">
+          <div class="today-col-title">Сделать сегодня</div>
+          <div id="today-rows-todo"></div>
+        </div>
+      </div>
     </div>
 
     <h2 class="section-title">Ближайшее по плану</h2>
@@ -775,7 +791,8 @@ function planCard(entry, today, onlyActionable){
     if(d <= today){ current = entry; break; }
   }
   const statusEl = document.getElementById('today-status');
-  const rowsEl = document.getElementById('today-rows');
+  const allEl = document.getElementById('today-rows-all');
+  const todoEl = document.getElementById('today-rows-todo');
   if(!current){
     statusEl.textContent = "Нет данных по плану";
     statusEl.className = "today-status due";
@@ -783,9 +800,16 @@ function planCard(entry, today, onlyActionable){
     const isToday = parseDate(current.date).getTime() === today.getTime();
     statusEl.textContent = isToday ? "🔔 Сегодня по плану:" : "Актуально с " + current.date + ":";
     statusEl.className = "today-status " + (current.status==='done' ? 'ok' : 'due');
+
+    const allHtml = current.items.map(it=>{
+      const noAction = NO_ACTION_RE.test(it.val);
+      return `<div class="feed-row${noAction ? ' no-action' : ''}"><div class="label">${it.label}</div><div class="val">${it.val}</div></div>`;
+    }).join('');
+    allEl.innerHTML = allHtml || "<div class='feed-row'><div class='val'>Нет данных</div></div>";
+
     const todoItems = actionableItems(current.items);
-    const html = todoItems.map(it=>`<div class="feed-row"><div class="label">${it.label}</div><div class="val">${it.val}</div></div>`).join('');
-    rowsEl.innerHTML = html || "<div class='feed-row'><div class='val'>Сегодня действий не требуется</div></div>";
+    const todoHtml = todoItems.map(it=>`<div class="feed-row"><div class="label">${it.label}</div><div class="val">${it.val}</div></div>`).join('');
+    todoEl.innerHTML = todoHtml || "<div class='feed-row'><div class='val'>Сегодня действий не требуется</div></div>";
   }
 
   // окно из 3 записей вокруг текущей (новее выше, старее ниже)
