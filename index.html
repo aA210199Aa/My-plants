@@ -646,7 +646,7 @@ const PLAN = [
     {label:"Без подкормки", val:"Все остальные — не кормить, их срок ~19.11: тропические, комнатные, сеянцы, клубника, салат, каллизия, сансевиерия, черенки"},
     {label:"Доп.", val:"Брать FertiЛАВ только из новой бутылки (проверить: прозрачная, без хлопьев); осмотр листьев и верха земли на плесень и вредителей"},
   ]},
-  {date:"05.11.2026", status:"pending",
+  {date:"06.11.2026", status:"pending",
   need:[
     {label:"Fertika Leaf Power", val:"1 г"},
   ],
@@ -766,6 +766,7 @@ const PLAN = [
 ];
 
 const JOURNAL = [
+  {d:"05.11.2026", who:"Клубника", action:"Калий — завтра; список покупок", note:"Fertika Leaf Power клубнике перенесён на завтра, 06.11 (1 г на 2 л воды, по ~650 мл на горшок). Докупить: 1) Аминозол, 2) калий (монофосфат или сернокислый), 3) ОрганикМикс к ~20.12, 4) мини-весы на 0,01 г; биогумус — уточнить, есть ли. Гуми-90 и универсальное NPK — по желанию, не срочно", status:"done"},
   {d:"05.11.2026", who:"Клубника", action:"Слабый куст, свет, калий", note:"В одном горшке куст совсем маленький — срезаем цветоносы и подсохшие листья. Свет у всех растений с 08:00 до 23:00/23:30 (~15 ч). Для сладости добавляем калий: Fertika Leaf Power 1 г на 2 л воды, по ~650 мл на горшок, затем раз в 10–14 дней", status:"done"},
   {d:"05.11.2026", who:"Клубника", action:"Первый урожай", note:"Съедено 3 ягоды, кисловатые. Возможные причины: зимний свет и тепло, ягоды первой волны после пересадки, мало калия (ОрганикМикс 6-3-3). Старая бутылка ФертиЛАВ с плесенью выброшена", status:"done"},
   {d:"05.11.2026", who:"FertiЛАВ", action:"Плесень в бутылке", note:"Плесень была в старой бутылке, из неё 05.11 подкормили все растения. Жидкость, которую вливали в раствор, была прозрачной, раствор сильно разбавлен — риск низкий (плесень, скорее всего, на дозаторе или стенках). Старую бутылку выбросить, новую проверить: прозрачная жидкость, без хлопьев и плёнки, без запаха. Верх земли всё же осмотреть в ближайшие 1–2 недели (особенно томаты с Цимусом, сеянцы, Гипик, папоротник); при белом налёте снять верхний слой и полить Биокомплекс-БТУ (1,5 мл на 500 мл)", status:"done"},
@@ -880,9 +881,9 @@ const SOIL_RECIPES = [
 const STOCK_LIQUID = [
   {n:"FertiЛАВ Mineralium", have:true, meta:"Все комнатные декоративные и томаты; осталась новая целая бутылка (перед использованием проверять); старую с плесенью выбросила 05.11"},
   {n:"Florizel Тропические", have:true, meta:"Тропические (фикусы, монстера)"},
-  {n:"Гуми-90", have:false, meta:"Томаты, овощи — раствор простоял больше месяца, испортился; докупить"},
-  {n:"Аминозол (Avgust)", have:false, meta:"Закончился (05.11) — докупить; овощи, декоративно-цветочные"},
-  {n:"Универсальное NPK (жидкое)", have:false, meta:"Овощи — наращивание листвы после обрезки урожая (томаты №7-9)"},
+  {n:"Гуми-90", have:false, optional:true, meta:"Стимулятор роста, не обязателен — по желанию"},
+  {n:"Аминозол (Avgust)", have:false, meta:"1. Закончился (05.11) — докупить; нужен сеянцам, рассаде и салату"},
+  {n:"Универсальное NPK (жидкое)", have:false, optional:true, meta:"ФертиЛАВ его заменяет — не нужно, по желанию"},
   {n:"Fertika Leaf Power для орхидей (15 г)", have:true, meta:"NPK 6,4-11-31, много калия; по этикетке для орхидей"},
 ];
 const STOCK_SUBSTRATE = [
@@ -890,7 +891,7 @@ const STOCK_SUBSTRATE = [
   {n:"ZION для овощей", have:true, meta:"Уже внесён, работает 3 года"},
   {n:"ZION для клубники", have:false, unsure:true, meta:"Нет на фото 05.11 — уточнить · Клубника, при посадке"},
   {n:"Древесная зола", have:false, unsure:true, meta:"Нет на фото 05.11 — уточнить · Томаты, овощи — плодоношение"},
-  {n:"ОрганикМикс для клубники и ягодных", have:false, meta:"Закончился (05.11, внесён по 2 ст.л. на горшок) — докупить к ~20.12"},
+  {n:"ОрганикМикс для клубники и ягодных", have:false, meta:"3. Закончился (05.11, внесён по 2 ст.л. на горшок) — докупить к ~20.12"},
 ];
 const STOCK_MICRO = [
   {n:"Сульфат магния Agros", have:true, meta:"При хлорозе"},
@@ -898,9 +899,10 @@ const STOCK_MICRO = [
   {n:"Лимонная кислота", have:true, meta:"Подкисление воды"},
   {n:"Корневин", have:false, unsure:true, meta:"Нет на фото 05.11 — уточнить · Черенки, пересадка"},
   {n:"Аминосил", have:false, unsure:true, meta:"Нет на фото 05.11 — уточнить · Декоративно-лиственные"},
-  {n:"Монофосфат калия / калиевая селитра", have:false, meta:"Стимуляция цветения (томат №10, если долго без бутонов)"},
+  {n:"Калий: монофосфат калия или сернокислый калий", have:false, meta:"2. Для сладости клубники и томатов при плодоношении — докупить"},
   {n:"Лакмус (капли для pH)", have:true, meta:"Проверка кислотности"},
   {n:"Свежий лист (спрей 500 мл)", have:true, meta:"Протирка листьев; не удобрение"},
+  {n:"Мини-весы на 0,01 г", have:false, meta:"4. Чтобы точно отмерять 1 г (магний, калий) вместо щепотки — докупить"},
 ];
 const STOCK_BIO = [
   {n:"Биокомплекс-БТУ (Биозащита от болезней)", have:true, meta:"Фитофтороз, роса, парша; обеззараживание грунта"},
@@ -916,7 +918,7 @@ const STOCK_SOIL = [
   {n:"Цеолит (2 вида)", have:true, meta:""},
   {n:"Мох сфагнум", have:true, meta:""},
   {n:"Песок речной (промытый, прокалённый)", have:true, meta:""},
-  {n:"Биогумус БиоГранула", have:false, unsure:true, meta:"Нет на фото 05.11 — уточнить"},
+  {n:"Биогумус БиоГранула", have:false, unsure:true, meta:"Нет на фото 05.11 — уточнить; нужен салату и гороху"},
   {n:"Кокосовый торф (брикет 500г)", have:true, meta:""},
   {n:"Seramis для орхидей", have:true, meta:""},
   {n:"Грунт декор.-лиственных", have:true, meta:"Основа — торф; лежит далеко (со слов 05.11)"},
@@ -1141,16 +1143,17 @@ let stockState = {};
 try{ stockState = JSON.parse(localStorage.getItem(STOCK_KEY) || '{}') || {}; }catch(e){ stockState = {}; }
 function saveStock(){ try{ localStorage.setItem(STOCK_KEY, JSON.stringify(stockState)); }catch(e){} }
 function stockHave(s){ return (s.n in stockState) ? !!stockState[s.n] : !!s.have; }
-function stockUnsure(s){ return !(s.n in stockState) && !!s.unsure; }
+function stockUnsure(s){ return !(s.n in stockState) && (!!s.unsure || !!s.optional); }
 function stockItem(s){
   const have = stockHave(s), unsure = stockUnsure(s);
   const sub = s.meta ? `<span class="l-sub">${s.meta}</span>` : '';
   const cls = have ? 'yes' : (unsure ? 'maybe' : 'no');
-  const label = have ? '✅ есть' : (unsure ? '❓ нет на фото' : '❌ нужно купить');
+  const label = have ? '✅ есть' : (unsure ? (s.optional ? '➖ по желанию' : '❓ нет на фото') : '❌ нужно купить');
   return `<li><span class="l-name">${s.n}${sub}</span><label class="stock-check stock-toggle ${cls}"><input type="checkbox" data-stock="${encodeURIComponent(s.n)}" ${have ? 'checked' : ''}> ${label}</label></li>`;
 }
 function renderStock(){
-  const missing = ALL_STOCK.filter(s => !stockHave(s) && !stockUnsure(s));
+  const prio = s => { const m = /^(\d+)\./.exec(s.meta || ''); return m ? +m[1] : 99; };
+  const missing = ALL_STOCK.filter(s => !stockHave(s) && !stockUnsure(s)).sort((a, b) => prio(a) - prio(b));
   document.getElementById('stock-missing').innerHTML = missing.length
     ? missing.map(stockItem).join("")
     : `<li><span class="l-name">Всё необходимое есть в наличии</span></li>`;
