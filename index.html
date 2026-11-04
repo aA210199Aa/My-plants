@@ -207,9 +207,14 @@
   .status-dot.grow{background:var(--violet);box-shadow:0 0 6px var(--violet);}
 
   /* ===== Plant photos ===== */
-  .plant-photo{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;margin-bottom:8px;background:var(--panel-alt);}
-  .plant-card.expanded .plant-photo{aspect-ratio:auto;max-height:520px;object-fit:contain;}
-  .plant-photo-extra{display:block;width:100%;border-radius:8px;margin:6px 0 10px;background:var(--panel-alt);}
+  .plant-photos{display:grid;gap:4px;margin-bottom:8px;}
+  .plant-photos.n1{grid-template-columns:1fr;}
+  .plant-photos.n2{grid-template-columns:repeat(2,1fr);}
+  .plant-photos.n3{grid-template-columns:repeat(3,1fr);}
+  .plant-photos img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:var(--panel-alt);}
+  .plant-photos.n2 img,.plant-photos.n3 img{aspect-ratio:1/1;}
+  .plant-card.expanded .plant-photos{grid-template-columns:1fr;}
+  .plant-card.expanded .plant-photos img{aspect-ratio:auto;max-height:520px;object-fit:contain;}
   .plant-photo-date{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10px;color:var(--text-dimmer);margin:0 0 6px;}
 
   /* ===== Что понадобится ===== */
@@ -448,7 +453,7 @@ const PLANTS_SALAD = [
 ];
 
 const PLANTS_BERRIES = [
-  {n:"Клубника (6 кустов)", loc:"Стеллаж", pot:"3 горшка по 5л, по 2 куста", state:"good", photos:["photos/strawberry-1.jpg","photos/strawberry-2.jpg"], photoDate:"03.11.2026", note:"Пересажены из стаканчиков в большие горшки, цветут, есть созревшая ягода. В одном горшке у куста сухая мохнатая розетка в центре — возможно, отмирает. Уточнено 04.11: 6 кустов, по 2 в каждом из трёх горшков по 5л", history:[
+  {n:"Клубника (6 кустов)", loc:"Стеллаж", pot:"3 горшка по 5л, по 2 куста", state:"good", photos:["photos/strawberry-1.jpg","photos/strawberry-2.jpg","photos/strawberry-3.jpg"], photoDate:"03.11.2026", note:"Пересажены из стаканчиков в большие горшки, цветут, есть созревшая ягода. В одном горшке у куста сухая мохнатая розетка в центре — возможно, отмирает. Уточнено 04.11: 6 кустов, по 2 в каждом из трёх горшков по 5л", history:[
     {date:"04.11.2026", note:"Уточнено: 6 кустов, по 2 в трёх горшках по 5л. ОрганикМикс — 20г/куст, т.е. 40г (~4 ст.л. без горки) на горшок"},
     {date:"03.11.2026", note:"По фото: уже в больших горшках, цветут, на одном кусте созревшая ягода. Условие «после пересадки» для ОрганикМикс выполнено — 20г/куст (~2 ст.л. без горки)"},
     {date:"31.08.2026", note:"По фото подтверждён размер — маленькие сеянцы в стаканчиках. ОрганикМикс (20г/куст) пока не вносить — доза рассчитана на взрослые кусты, для такого объёма грунта будет слишком крепко. Отложить до пересадки в горшок побольше"},
@@ -511,7 +516,7 @@ const PLANTS_DECOR = [
     {date:"04.08.2026", note:"Обработка Фитоверм (1 ампула/500мл), весь раствор на растение, не смывать 2-3 дня"},
     {date:"30.08.2026", note:"Клещ выведен полностью, курс Фитоверм закрыт"},
   ], care:"Яркий рассеянный свет для сохранения пестролистности\nПолив по подсыхании верхнего слоя\nПодкормка FertiЛАБ 1 раз в 2 недели"},
-  {num:4, n:"Традесканция", loc:"Стол", pot:"Небольшой", state:"good", photos:["photos/tradescantia.jpg"], photoDate:"03.11.2026", note:"Розово-фиолетовый край", history:[
+  {num:4, n:"Традесканция", loc:"Стол", pot:"Небольшой", state:"good", note:"Розово-фиолетовый край", history:[
     {date:"01.09.2026", note:"Подкормка FertiЛАБ (2-3 нажатия/горшок)"},
   ], care:"Яркий свет важен для яркости окраски листьев\nПолив регулярный, не пересушивать\nЛегко черенкуется при желании размножить\nПодкормка FertiЛАБ 1 раз в 2 недели"},
   {num:5, n:'Гипоэстес (розовая пупырка) "Гипик"', loc:"Стол, под более слабой лампой", pot:"Серый", state:"warn", photos:["photos/hypoestes.jpg"], photoDate:"03.11.2026", note:"Световой/термический стресс от лампы 80-100Вт (этиоляция, потеря розовой окраски, бронзовые пятна на нижних листьях, гофрированность верхних)", history:[
@@ -523,7 +528,7 @@ const PLANTS_DECOR = [
   {num:7, n:"Драцена", loc:"Стол", pot:"Зелёный", state:"good", photos:["photos/dracaena.jpg"], photoDate:"03.11.2026", note:"Молодое растение", history:[
     {date:"01.09.2026", note:"Подкормка FertiЛАБ (2-3 нажатия/горшок)"},
   ], care:"Устойчива к недостатку света и нерегулярному поливу\nНе переносит перелив и хлорированную воду — лучше отстоянная\nПодкормка FertiЛАБ 1 раз в 2 недели"},
-  {num:8, n:"Tradescantia spathacea ⭐", loc:"Прихожая", pot:"Серый волнистый", state:"good", photos:["photos/tradescantia-spathacea.jpg"], photoDate:"03.11.2026", note:"Розетка с пурпурными «лодочками»-прицветниками у основания листьев (Moses-in-the-Cradle)", history:[
+  {num:8, n:"Tradescantia spathacea ⭐", loc:"Прихожая", pot:"Серый волнистый", state:"good", photos:["photos/tradescantia-spathacea.jpg","photos/tradescantia-spathacea-2.jpg"], photoDate:"03.11.2026", note:"Розетка с пурпурными «лодочками»-прицветниками у основания листьев (Moses-in-the-Cradle)", history:[
     {date:"21.07.2026", note:"Новое растение, добавлено в список"},
     {date:"30.08.2026", note:"Подтверждён вид — Tradescantia spathacea, стоит в прихожей"},
     {date:"01.09.2026", note:"Подкормка FertiЛАБ (2-3 нажатия/горшок)"},
@@ -595,7 +600,7 @@ const PLAN = [
     {label:"ФертиЛАБ", val:"Хлорофитум, Папоротник, Традесканция, Драцена, Tradescantia spathacea — 2–3 мл на 500 мл, одна порция на все 5 горшков. Растения под лампами — кормить раз в 2 недели. Нет ФертиЛАБа — Аминозол 2,5–3 мл на 500 мл"},
     {label:"Florizel Тропические", val:"Pink Princess, Фикус бонсай (толстый ствол), Фикус Бенджамина, Филодендрон зелёный — 5 мл на 500 мл, одна порция на все 4 растения (не хватит — вторая такая же)<br>Монстера variegata — 2,5 мл на 500 мл, отдельная порция (половинная доза; полную — когда нарастит больше зелени)"},
     {label:"ОрганикМикс (сухой, не разводить)", val:"Клубника, 3 горшка по 2 куста — 20 г на куст, 40 г на горшок. Рассыпать по поверхности, слегка перемешать с верхним слоем, затем полить"},
-    {label:"Без подкормки", val:"Салат (оба горшка), Каллизия, Сансевиерия (черенки в перлите) — не кормить; Сансевиерию не поливать, пока перлит не подсохнет"},
+    {label:"Без подкормки", val:"Салат, Каллизия, Сансевиерия (черенки в перлите) — не кормить; Сансевиерию не поливать, пока перлит не подсохнет"},
     {label:"Доп.", val:"Осмотр на вредителей"},
   ]},
   {date:"04.10.2026", status:"missed", items:[
@@ -705,6 +710,7 @@ const PLAN = [
 ];
 
 const JOURNAL = [
+  {d:"05.11.2026", who:"Все растения", action:"Уточнение по списку", note:"Фикусов два (бонсай и Бенджамина) — подтверждено. Томаты: 4 взрослых + 2 из семян. Клубника — 3 горшка (3 фото). Традесканция на обоих фото — Tradescantia spathacea (оба фото одного растения). Салат: остался один горшок (какой — уточняется)", status:"done"},
   {d:"05.11.2026", who:"Все растения", action:"Фото и проверка списка", note:"К карточкам добавлены фото от 03.11. Хлорофитумы по фото стоят на столе под лампой (не в ванной); Pink Princess и Фикус Бенджамина — в чёрных горшках. Зелёный филодендрон без фото — ждём уточнения, какое растение на фото", status:"done"},
   {d:"04.11.2026", who:"Фикус Бенджамина, Монстера variegata", action:"Уточнение состояния", note:"Бенджамина: листвы много, восстановилась — полная доза Florizel. Монстера: дала 3 листа после покупки, корней достаточно — половинная доза Florizel (было: четверть)", status:"done"},
   {d:"04.11.2026", who:"Фикус Бенджамина", action:"Уточнение", note:"Фикусов два: один Бенджамина (не бонсай) и один бонсай с толстым стволом. Раньше Бенджамина была записана как 2 экз. — исправлено", status:"done"},
@@ -963,8 +969,7 @@ function renderHistory(history){
 function plantCard(p){
   const numBadge = p.num ? `<span class="plant-num">№${p.num}</span>` : '';
   const photos = p.photos || [];
-  const photoHtml = photos.length ? `<img class="plant-photo" src="${photos[0]}" alt="${p.n}" loading="lazy">` : '';
-  const photoExtra = photos.slice(1).map(src=>`<img class="plant-photo-extra" src="${src}" alt="${p.n}" loading="lazy">`).join('');
+  const photoHtml = photos.length ? `<div class="plant-photos n${Math.min(photos.length,3)}">${photos.map(src=>`<img src="${src}" alt="${p.n}" loading="lazy">`).join('')}</div>` : '';
   const photoDate = photos.length && p.photoDate ? `<div class="plant-photo-date">фото ${p.photoDate}</div>` : '';
   return `<div class="plant-card" onclick="this.classList.toggle('expanded')">
     ${photoHtml}
@@ -972,7 +977,7 @@ function plantCard(p){
     <div class="plant-meta">${p.loc} · ${p.pot}</div>
     <div class="plant-expand-hint">нажми для подробностей →</div>
     <div class="plant-detail">
-      ${photoDate}${photoExtra}
+      ${photoDate}
       <div class="plant-detail-label">Текущее состояние</div>
       <div class="plant-note"><span class="status-dot ${p.state}"></span>${p.note}</div>
       <div class="plant-detail-label">История изменений</div>
