@@ -289,6 +289,12 @@
   .stock-check.yes{color:var(--leaf);}
   .stock-check.no{color:var(--red);font-weight:600;}
   .stock-check.maybe{color:var(--amber);}
+  .stock-toggle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+  .stock-toggle input{width:17px;height:17px;accent-color:var(--leaf);cursor:pointer;flex-shrink:0;}
+  .stock-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 16px;font-size:12px;color:var(--text-dim);line-height:1.4;}
+  .stock-bar span{flex:1 1 100%;}
+  .stock-bar button{background:var(--panel-alt);color:var(--text);border:1px solid var(--panel-line);border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;}
+  .stock-bar button:hover{border-color:var(--violet);}
 
   footer{margin-top:40px;text-align:center;color:var(--text-dimmer);font-size:11px;font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;}
 </style>
@@ -399,6 +405,11 @@
 
   <!-- ===================== НАЛИЧИЕ ===================== -->
   <section class="view" id="view-stock">
+    <div class="stock-bar">
+      <span>Отмечай галочкой, что есть. Отметки хранятся в этом браузере (на другом устройстве их не будет); чтобы я обновила таблицу, нажми «Скопировать» и пришли мне текст.</span>
+      <button type="button" onclick="copyStock(this)">Скопировать мои отметки</button>
+      <button type="button" onclick="resetStock()">Сбросить</button>
+    </div>
     <h2 class="section-title">⚠️ Нужно докупить</h2>
     <ul class="simple-list stock-list" id="stock-missing"></ul>
     <h2 class="section-title">💧 Жидкие удобрения</h2>
@@ -423,8 +434,8 @@ const LAST_UPDATED = "05.11.2026";
 document.getElementById('last-updated').textContent = LAST_UPDATED;
 
 const TOMATO_CARE = "Полив: по подсыхании верхнего слоя, взрослым кустам — ежедневно (иногда дважды в день)\nОпыление: слегка встряхивать кисти по утрам (культура самоопыляемая)\nПодкормка: настой золы + Гуми-90 каждые 10-14 дней в цветении/плодоношении\nФормировка: убирать листья у земли и лишние загущающие";
-const SALAD_CARE = "Полив: по подсыхании грунта, в маленьких горшках может быть 2 раза в день\nНЕ подкармливать минеральными удобрениями — от них горчит (максимум биогумус)\nСрезать листья, оставляя точку роста — так салат отрастает заново";
-const STRAWBERRY_CARE = "Полив: регулярный, без пересыхания и без перелива\nСвет: яркий, под фитолампой 12-14 ч/день\nZION для клубники уже внесён при посадке — повторно не досыпать\nНовые листья/усы — хороший признак укоренения\nЯгоды снимать полностью красными; на сладость влияют свет, тепло и калий, избыток азота даёт кислые и водянистые ягоды";
+const SALAD_CARE = "Полив: по подсыхании грунта, в маленьких горшках может быть 2 раза в день\nНЕ подкармливать минеральными удобрениями — от них горчит (максимум биогумус); питание — заранее в грунт при посеве (Цимус 30 мл на 1 л грунта или биогумус)\nСрезать листья, оставляя точку роста — так салат отрастает заново";
+const STRAWBERRY_CARE = "Полив: регулярный, без пересыхания и без перелива\nСвет: яркий, фитолампа 08:00–23:00/23:30 (~15 ч/день)\nZION для клубники уже внесён при посадке — повторно не досыпать\nНовые листья/усы — хороший признак укоренения\nЯгоды снимать полностью красными; на сладость влияют свет, тепло и калий, избыток азота даёт кислые и водянистые ягоды\nСлабый куст: срезать цветоносы и подсохшие листья, сердцевину не заглублять и не заливать";
 
 const PLANTS_TOMATOES = [
   {n:"Томат «Красная россыпь» (из семян, 2 шт.)", loc:"Стеллаж", pot:"Стаканчики для рассады", state:"good", photos:["photos/tomato-seedling-1.jpg","photos/tomato-seedling-2.jpg"], photoDate:"03.11.2026", note:"Два небольших, достаточно крепких куста (уточнено 05.11). Посеяно 10.09.2026, всходы 13.09.2026 (4 дня от посева до всходов)", history:[
@@ -458,7 +469,8 @@ const PLANTS_SALAD = [
 ];
 
 const PLANTS_BERRIES = [
-  {n:"Клубника (6 кустов)", loc:"Стеллаж", pot:"3 горшка по 5л, по 2 куста", state:"good", photos:["photos/strawberry-1.jpg","photos/strawberry-2.jpg","photos/strawberry-3.jpg"], photoDate:"03.11.2026", note:"Пересажены из стаканчиков в большие горшки, цветут, есть созревшая ягода. В одном горшке у куста сухая мохнатая розетка в центре — возможно, отмирает. Уточнено 04.11: 6 кустов, по 2 в каждом из трёх горшков по 5л", history:[
+  {n:"Клубника (6 кустов)", loc:"Стеллаж", pot:"3 горшка по 5л, по 2 куста", state:"good", photos:["photos/strawberry-1.jpg","photos/strawberry-2.jpg","photos/strawberry-3.jpg"], photoDate:"03.11.2026", note:"Пересажены из стаканчиков в большие горшки, цветут, есть созревшая ягода. В одном горшке у куста сухая мохнатая розетка в центре — возможно, отмирает. Уточнено 04.11: 6 кустов, по 2 в каждом из трёх горшков по 5л. 05.11: в одном горшке один куст совсем маленький — по фото 03.11 низкий, с сухой «мохнатой» серединой и 2–3 листьями, рядом сильный сосед", history:[
+    {date:"05.11.2026", note:"В одном горшке куст совсем маленький (слабый) — срезаем цветоносы и подсохшие листья, даём окрепнуть"},
     {date:"05.11.2026", note:"Первый урожай: съедено 3 ягоды, кисловатые"},
     {date:"05.11.2026", note:"Подкормка ОрганикМикс: по 2 ст.л. на горшок (половина нормы), пакет закончился. Следующая ~20.12"},
     {date:"04.11.2026", note:"Уточнено: 6 кустов, по 2 в трёх горшках по 5л. ОрганикМикс — 20г/куст, т.е. 40г (~4 ст.л. без горки) на горшок"},
@@ -614,11 +626,13 @@ const PLAN = [
   need:[
     {label:"FertiЛАВ", val:"≈ 27 мл (по 2 мл на горшок и куст, плющу 3 мл)"},
     {label:"Florizel Тропические", val:"5 мл"},
+    {label:"Fertika Leaf Power", val:"1 г"},
   ],
   items:[
     {label:"FertiЛАВ — томаты", val:"Большие томаты, 4 куста — 2 порции по 500 мл, в каждую 4 мл (4 нажатия): одна порция на два куста, по ~250 мл на куст<br>«Красная россыпь» (2 небольших куста) — 4 мл на 500 мл, по ~200 мл каждому (норма для рассады раз в 10–14 дней)"},
     {label:"FertiЛАВ — комнатные", val:"Хлорофитумы (2 горшка), Традесканция, Tradescantia spathacea, Драцена — по 2 мл (2 нажатия) на горшок, Плющ — 3 мл. 5 мл на 500 мл хватает на 2–3 горшка (по ~200 мл), всего понадобятся 3 порции. Растения под лампами — раз в 2 недели"},
     {label:"FertiЛАВ — Гипик", val:"Гипоэстес «Гипик» (на фитиле) — 2 мл на горшок, если листья окрепли; если нет — снова ~0,6 мл. Раствор лить сверху на землю, в резервуар удобрение не добавлять"},
+    {label:"Fertika Leaf Power — клубника", val:"Клубника, 3 горшка — 1 г на 2 л воды, по ~650 мл на горшок (калий, раз в 10–14 дней, пока плодоносит)"},
     {label:"Florizel Тропические", val:"Philodendron Pink Princess, Фикус бонсай (толстый ствол), Фикус Бенджамина, Филодендрон зелёный — 5 мл на 500 мл, по ~100 мл на растение<br>Монстера variegata — половинная доза: 100 мл этого раствора разбавить 100 мл чистой воды и полить ~150 мл"},
     {label:"Без подкормки", val:"Папоротник (его срок ~26.11–03.12, 1 мл), Клубника (ОрганикМикс ~20.12 после покупки), Салат, Каллизия, Сансевиерия (черенки в перлите), черенки томата и черенки Гипика — не кормить. Аминозол закончился — докупить"},
     {label:"Доп.", val:"Брать FertiЛАВ только из новой бутылки (прозрачная жидкость, без хлопьев и плёнки); осмотр на вредителей и плесень"},
@@ -631,6 +645,14 @@ const PLAN = [
     {label:"FertiЛАВ — большие томаты", val:"Большие томаты, 4 куста — 2 порции по 500 мл, в каждую 4 мл (4 нажатия): одна порция на два куста, по ~250 мл на куст (по этикетке взрослым томатам 2–3 мл на горшок раз в 7–10 дней). Сульфат магния второй раз не нужен — сначала посмотреть новые листья у кустов с жёлтыми листьями"},
     {label:"Без подкормки", val:"Все остальные — не кормить, их срок ~19.11: тропические, комнатные, сеянцы, клубника, салат, каллизия, сансевиерия, черенки"},
     {label:"Доп.", val:"Брать FertiЛАВ только из новой бутылки (проверить: прозрачная, без хлопьев); осмотр листьев и верха земли на плесень и вредителей"},
+  ]},
+  {date:"05.11.2026", status:"pending",
+  need:[
+    {label:"Fertika Leaf Power", val:"1 г"},
+  ],
+  items:[
+    {label:"Fertika Leaf Power — клубника (калий для сладости)", val:"Клубника, 3 горшка по 2 куста — 1 г на 2 л воды (по этикетке), по ~650 мл на горшок. Дальше раз в 10–14 дней, пока плодоносит"},
+    {label:"Клубника — слабый куст", val:"В горшке с маленьким кустом — срезать цветоносы и подсохшие листья, сердцевину не заглублять и не заливать"},
   ]},
   {date:"03.11.2026", status:"done",
   items:[
@@ -744,6 +766,7 @@ const PLAN = [
 ];
 
 const JOURNAL = [
+  {d:"05.11.2026", who:"Клубника", action:"Слабый куст, свет, калий", note:"В одном горшке куст совсем маленький — срезаем цветоносы и подсохшие листья. Свет у всех растений с 08:00 до 23:00/23:30 (~15 ч). Для сладости добавляем калий: Fertika Leaf Power 1 г на 2 л воды, по ~650 мл на горшок, затем раз в 10–14 дней", status:"done"},
   {d:"05.11.2026", who:"Клубника", action:"Первый урожай", note:"Съедено 3 ягоды, кисловатые. Возможные причины: зимний свет и тепло, ягоды первой волны после пересадки, мало калия (ОрганикМикс 6-3-3). Старая бутылка ФертиЛАВ с плесенью выброшена", status:"done"},
   {d:"05.11.2026", who:"FertiЛАВ", action:"Плесень в бутылке", note:"Плесень была в старой бутылке, из неё 05.11 подкормили все растения. Жидкость, которую вливали в раствор, была прозрачной, раствор сильно разбавлен — риск низкий (плесень, скорее всего, на дозаторе или стенках). Старую бутылку выбросить, новую проверить: прозрачная жидкость, без хлопьев и плёнки, без запаха. Верх земли всё же осмотреть в ближайшие 1–2 недели (особенно томаты с Цимусом, сеянцы, Гипик, папоротник); при белом налёте снять верхний слой и полить Биокомплекс-БТУ (1,5 мл на 500 мл)", status:"done"},
   {d:"05.11.2026", who:"Все растения", action:"Цикл подкормки закрыт", note:"Большие томаты политы раствором FertiЛАВ (двум кустам — с сульфатом магния) — цикл 03.11–05.11 выполнен. Следующие: 12.11 — большие томаты (по этикетке раз в 7–10 дней), 19.11 — общий цикл (тропические, комнатные, сеянцы, большие томаты), папоротник ~26.11–03.12, клубника ~20.12 после покупки ОрганикМикса", status:"done"},
@@ -818,7 +841,7 @@ const SEEDS = [
 const SEEDS_NOTES = [
   {n:"Горох", note:"Горшок от 3л, опора для плетей, умеренный полив, расстояние 5–7см"},
   {n:"Салат", note:"Быстрый урожай 3-4 нед., не кормить минералкой, срезать листья оставляя точку роста"},
-  {n:"Следующий посев", note:"Горох — всё ещё не посеян, в очереди. 10.09 вместо него посажено 2 семени томата «Красная россыпь» (уже взошли)"},
+  {n:"Следующий посев", note:"05.11: планирует посадить горох и новый салат. Салат — питание заранее в грунт (Цимус 30 мл на 1 л или биогумус), без жидких минеральных; горох — без азота, позже калий при цветении"},
 ];
 
 const SOIL = [
@@ -1111,26 +1134,62 @@ document.getElementById('soil-recipes').innerHTML = SOIL_RECIPES.map(r=>`
   <div class="recipe"><div class="rname">${r.n}</div><div class="rmix">${r.mix}</div></div>
 `).join("");
 
-/* ---- Постоянное наличие ---- */
-function stockItem(s){
-  const sub = s.meta ? `<span class="l-sub">${s.meta}</span>` : '';
-  const check = s.have
-    ? '<span class="stock-check yes">✅ есть</span>'
-    : s.unsure
-      ? '<span class="stock-check maybe">❓ нет на фото</span>'
-      : '<span class="stock-check no">❌ нужно купить</span>';
-  return `<li><span class="l-name">${s.n}${sub}</span>${check}</li>`;
-}
+/* ---- Постоянное наличие (с галочками; отметки хранятся в браузере) ---- */
 const ALL_STOCK = [...STOCK_LIQUID, ...STOCK_SUBSTRATE, ...STOCK_MICRO, ...STOCK_BIO, ...STOCK_SOIL];
-const MISSING_STOCK = ALL_STOCK.filter(s=>!s.have && !s.unsure);
-document.getElementById('stock-missing').innerHTML = MISSING_STOCK.length
-  ? MISSING_STOCK.map(stockItem).join("")
-  : `<li><span class="l-name">Всё необходимое есть в наличии</span></li>`;
-document.getElementById('stock-liquid').innerHTML = STOCK_LIQUID.map(stockItem).join("");
-document.getElementById('stock-substrate').innerHTML = STOCK_SUBSTRATE.map(stockItem).join("");
-document.getElementById('stock-micro').innerHTML = STOCK_MICRO.map(stockItem).join("");
-document.getElementById('stock-bio').innerHTML = STOCK_BIO.map(stockItem).join("");
-document.getElementById('stock-soil').innerHTML = STOCK_SOIL.map(stockItem).join("");
+const STOCK_KEY = 'moysad-stock-v1';
+let stockState = {};
+try{ stockState = JSON.parse(localStorage.getItem(STOCK_KEY) || '{}') || {}; }catch(e){ stockState = {}; }
+function saveStock(){ try{ localStorage.setItem(STOCK_KEY, JSON.stringify(stockState)); }catch(e){} }
+function stockHave(s){ return (s.n in stockState) ? !!stockState[s.n] : !!s.have; }
+function stockUnsure(s){ return !(s.n in stockState) && !!s.unsure; }
+function stockItem(s){
+  const have = stockHave(s), unsure = stockUnsure(s);
+  const sub = s.meta ? `<span class="l-sub">${s.meta}</span>` : '';
+  const cls = have ? 'yes' : (unsure ? 'maybe' : 'no');
+  const label = have ? '✅ есть' : (unsure ? '❓ нет на фото' : '❌ нужно купить');
+  return `<li><span class="l-name">${s.n}${sub}</span><label class="stock-check stock-toggle ${cls}"><input type="checkbox" data-stock="${encodeURIComponent(s.n)}" ${have ? 'checked' : ''}> ${label}</label></li>`;
+}
+function renderStock(){
+  const missing = ALL_STOCK.filter(s => !stockHave(s) && !stockUnsure(s));
+  document.getElementById('stock-missing').innerHTML = missing.length
+    ? missing.map(stockItem).join("")
+    : `<li><span class="l-name">Всё необходимое есть в наличии</span></li>`;
+  document.getElementById('stock-liquid').innerHTML = STOCK_LIQUID.map(stockItem).join("");
+  document.getElementById('stock-substrate').innerHTML = STOCK_SUBSTRATE.map(stockItem).join("");
+  document.getElementById('stock-micro').innerHTML = STOCK_MICRO.map(stockItem).join("");
+  document.getElementById('stock-bio').innerHTML = STOCK_BIO.map(stockItem).join("");
+  document.getElementById('stock-soil').innerHTML = STOCK_SOIL.map(stockItem).join("");
+}
+renderStock();
+document.addEventListener('change', function(e){
+  const t = e.target;
+  if(t && t.dataset && t.dataset.stock !== undefined){
+    stockState[decodeURIComponent(t.dataset.stock)] = t.checked;
+    saveStock();
+    renderStock();
+  }
+});
+function stockSummary(){
+  const changed = ALL_STOCK.filter(s => (s.n in stockState) && !!stockState[s.n] !== !!s.have);
+  const yes = changed.filter(s => stockState[s.n]).map(s => s.n);
+  const no = changed.filter(s => !stockState[s.n]).map(s => s.n);
+  const missing = ALL_STOCK.filter(s => !stockHave(s) && !stockUnsure(s)).map(s => s.n);
+  let t = 'Наличие с сайта (' + new Date().toLocaleDateString('ru-RU') + ')\n';
+  if(yes.length) t += 'Теперь есть: ' + yes.join(', ') + '\n';
+  if(no.length) t += 'Теперь нет: ' + no.join(', ') + '\n';
+  t += 'Нужно докупить: ' + (missing.length ? missing.join(', ') : 'ничего');
+  return t;
+}
+function copyStock(btn){
+  const text = stockSummary();
+  const done = () => { btn.textContent = 'Скопировано ✓'; setTimeout(() => { btn.textContent = 'Скопировать мои отметки'; }, 1800); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(() => window.prompt('Скопируй текст:', text));
+  } else {
+    window.prompt('Скопируй текст:', text);
+  }
+}
+function resetStock(){ stockState = {}; saveStock(); renderStock(); }
 </script>
 </body>
 </html>
